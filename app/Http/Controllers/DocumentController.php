@@ -7,16 +7,18 @@ use App\Services\DocumentService;
 use App\Models\Document;
 use App\Models\DocumentAttachment;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 class DocumentController extends Controller
 {
     public function __construct(
         protected DocumentService $documentService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $documents = $this->documentService->list();
-        return view('documents.index', compact('documents'));
+    $filters = Arr::only($request->all(), ['search', 'type', 'sender', 'receiver', 'from_date', 'to_date']);
+    $documents = $this->documentService->list($filters);
+    return view('documents.index', compact('documents'));
     }
 
     public function create()
