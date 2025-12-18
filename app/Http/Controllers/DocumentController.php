@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\DocumentService;
 use App\Models\Document;
 use App\Models\DocumentAttachment;
-
+use Illuminate\Support\Facades\Storage;
 class DocumentController extends Controller
 {
     public function __construct(
@@ -32,6 +32,7 @@ class DocumentController extends Controller
             'receiver' => 'required|string',
             'content' => 'nullable|string',
             'attachments' => 'nullable|array',
+
             'attachments.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:10240',
         ]);
 
@@ -53,29 +54,46 @@ class DocumentController extends Controller
         return view('documents.edit', compact('document'));
     }
 
-    public function update(Request $request, Document $document)
-    {
-        if ($document->status !== 'draft') {
-            abort(403);
-        }
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'type' => 'required|in:letter,document',
-            'receiver' => 'required|string',
-            'content' => 'nullable|string',
-        ]);
-
-        $document->update([
-            'title' => $request->title,
-            'type' => $request->type,
-            'receiver' => $request->receiver,
-            'body' => $request->content,
-            'registered_at' => now()->toDateString(),
-        ]);
-
-        return redirect()->route('documents.index')->with('success', 'مستند با موفقیت به‌روزرسانی شد.');
+   public function update(Request $request, Document $document)
+{
+    if ($document->status !== 'draft') {
+        abort(403);
     }
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'type' => 'required|in:letter,document',
+        'receiver' => 'required|string',
+        'content' => 'nullable|string',
+        'attachments' => 'nullable|array',
+        'attachments.*' => 'file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:10240',
+    ]);
+
+    // آپدیت فیلدهای اصلی
+    $document->update([
+        'title' => $request->title,
+        'type' => $request->type,
+        'receiver' => $request->receiver,
+        'body' => $request->content,
+        'registered_at' => now()->toDateString(),
+    ]);
+
+    // ذخیره پیوست‌های جدید (اگر آپلود شده باشن)
+    if (!empty($request->file('attachments'))) {
+        foreach ($request->file('attachments') as $file) {
+            if ($file && $file->isValid()) {
+                $path = $file->store('documents', 'public');
+                $document->attachments()->create([
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_path'     => $path,
+                    'size'          => $file->getSize(),
+                ]);
+            }
+        }
+    }
+
+    return redirect()->route('documents.index')->with('success', 'مستند با موفقیت به‌روزرسانی شد.');
+}
 
     public function download(Document $document, DocumentAttachment $attachment)
     {
