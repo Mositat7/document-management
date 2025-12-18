@@ -4,7 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Attachment extends Model
+class DocumentAttachment extends Model
 {
-    //
+    protected $fillable = [
+        'document_id',
+        'original_name',
+        'file_path',
+        'size',
+    ];
+
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
 }
+
