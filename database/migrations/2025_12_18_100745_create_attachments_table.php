@@ -11,10 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attachments', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+      Schema::create('document_attachments', function (Blueprint $table) {
+    $table->id();
+
+    $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+
+    $table->string('original_name');
+    $table->string('file_path');
+    $table->unsignedBigInteger('size');
+
+    $table->timestamps();
+});
+
     }
 
     /**
