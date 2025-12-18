@@ -11,10 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+      Schema::create('documents', function (Blueprint $table) {
+    $table->id();
+
+    $table->string('code')->unique(); // شماره شناسنامه خودکار (شمسی)
+    $table->string('title');
+    $table->enum('type', ['letter', 'document']);
+    $table->string('sender');   // فعلا کاربر جاری (string)
+    $table->string('receiver');
+
+    $table->text('body')->nullable();
+    $table->enum('status', ['draft', 'sent', 'archived'])->default('draft');
+
+    $table->date('registered_at'); // تاریخ شمسی (ذخیره میلادی، نمایش شمسی)
+
+    $table->timestamps();
+});
+
     }
 
     /**
